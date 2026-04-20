@@ -1,5 +1,5 @@
 steps:
-  # Build the Docker image from the arena_iq subdirectory
+  # Build Docker image (multi-stage: flutter build + nginx serve)
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'build'
@@ -8,8 +8,9 @@ steps:
       - '-f'
       - 'arena_iq/Dockerfile'
       - 'arena_iq'
+    timeout: '1200s'
 
-  # Push the image to Google Container Registry
+  # Push image to Container Registry
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
@@ -34,3 +35,5 @@ steps:
 
 images:
   - 'gcr.io/$PROJECT_ID/arena-iq:$COMMIT_SHA'
+
+timeout: '1800s'
