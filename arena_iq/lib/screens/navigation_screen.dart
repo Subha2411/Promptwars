@@ -42,21 +42,36 @@ class _NavigationScreenState extends State<NavigationScreen> {
           // Map + Overlay
           Consumer2<VenueProvider, NavigationProvider>(
             builder: (context, venueProv, navProv, _) {
+              final screenW = MediaQuery.of(context).size.width;
+              final screenH = MediaQuery.of(context).size.height;
+              // Drive cell size from width → always square cells on any screen
+              final double cellSize = screenW / VenueLayout.gridWidth;
+              final double mapH = cellSize * VenueLayout.gridHeight;
+              // On wide screens, fill the available height for aesthetics
+              final double finalH = mapH < screenH ? screenH : mapH;
+
               return Positioned.fill(
-                child: VenueHeatmap(
-                  zones: venueProv.zones,
-                  overlay: _buildMapOverlay(navProv),
-                  onZoneTap: (zone) {
-                    if (navProv.selectedDestinationType == null) {
-                       navProv.setDestinationPoint(zone.gridX, zone.gridY);
-                    } else {
-                       navProv.setUserPosition(zone.gridX, zone.gridY);
-                    }
-                  },
+                child: SingleChildScrollView(
+                  physics: const ClampingScrollPhysics(),
+                  child: SizedBox(
+                    height: finalH,
+                    child: VenueHeatmap(
+                      zones: venueProv.zones,
+                      overlay: _buildMapOverlay(navProv),
+                      onZoneTap: (zone) {
+                        if (navProv.selectedDestinationType == null) {
+                           navProv.setDestinationPoint(zone.gridX, zone.gridY);
+                        } else {
+                           navProv.setUserPosition(zone.gridX, zone.gridY);
+                        }
+                      },
+                    ),
+                  ),
                 ),
               );
             }
           ),
+
           
           SafeArea(
              child: Column(

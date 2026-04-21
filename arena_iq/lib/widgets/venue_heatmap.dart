@@ -99,13 +99,14 @@ class _HeatmapPainter extends CustomPainter {
       canvas.drawRRect(rRect, fillPaint);
       canvas.drawRRect(rRect, borderPaint);
 
-      // Draw Icon/Label
+      // Draw Icon/Label — font scales with cell size
       if (zone.shortLabel.isNotEmpty) {
+         final double fontSize = (cellW * 0.28).clamp(7.0, 11.0);
          final TextSpan span = TextSpan(
            text: zone.shortLabel,
            style: TextStyle(
              color: Colors.white.withOpacity(0.8),
-             fontSize: 10,
+             fontSize: fontSize,
              fontWeight: FontWeight.bold,
            ),
          );
