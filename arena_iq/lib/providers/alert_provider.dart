@@ -1,12 +1,12 @@
 import 'package:flutter/foundation.dart';
 import '../models/smart_alert.dart';
 import '../services/alert_engine.dart';
-import '../services/supabase_service.dart';
+import '../services/firebase_service.dart';
 import 'venue_provider.dart';
 
 class AlertProvider extends ChangeNotifier {
   final VenueProvider venueProvider;
-  final SupabaseService _supabase = SupabaseService();
+  final FirebaseService _firebase = FirebaseService();
   
   final List<SmartAlert> _alerts = [];
   List<SmartAlert> get activeAlerts => _alerts.where((a) => a.isActive).toList();
@@ -25,7 +25,7 @@ class AlertProvider extends ChangeNotifier {
       if (!_alerts.any((a) => a.isActive && a.alertType == alert.alertType)) {
          _alerts.insert(0, alert);
          added = true;
-         _supabase.insertAlert(alert); // Sync if online
+         _firebase.insertAlert(alert); // Sync if online
       }
     }
     

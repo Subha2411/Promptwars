@@ -7,13 +7,13 @@ import 'providers/navigation_provider.dart';
 import 'providers/queue_provider.dart';
 import 'providers/group_provider.dart';
 import 'providers/alert_provider.dart';
-import 'services/supabase_service.dart';
+import 'services/firebase_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize Supabase. If credentials aren't set, it fails gracefully and app runs offline-first
-  await SupabaseService().init();
+  // Initialize Firebase. If credentials aren't set, it fails gracefully and app runs offline-first
+  await FirebaseService().init();
 
   runApp(
     MultiProvider(

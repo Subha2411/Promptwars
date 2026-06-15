@@ -1,60 +1,78 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'supabase_service.dart';
+import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'firebase_service.dart';
 
 class RealtimeSyncService {
-  final SupabaseService _supabaseService;
-  
-  RealtimeSyncService(this._supabaseService);
+  final FirebaseService _firebaseService;
 
-  RealtimeChannel? _zonesChannel;
-  RealtimeChannel? _membersChannel;
-  RealtimeChannel? _alertsChannel;
-  RealtimeChannel? _meetPointsChannel;
+  RealtimeSyncService(this._firebaseService);
 
-  /// Starts listening to Postgres changes.
+  StreamSubscription? _zonesSub;
+  StreamSubscription? _membersSub;
+  StreamSubscription? _alertsSub;
+  StreamSubscription? _meetPointsSub;
+
+  /// Starts listening to Cloud Firestore collection updates.
   void startSubscriptions({
     required Function(Map<String, dynamic>) onZoneUpdate,
     required Function(Map<String, dynamic>) onMemberUpdate,
     required Function(Map<String, dynamic>) onAlertInsert,
     required Function(Map<String, dynamic>) onMeetPointUpdate,
   }) {
-    if (!_supabaseService.isReady) return;
-    
-    final client = Supabase.instance.client;
+    if (!_firebaseService.isReady) return;
 
-    _zonesChannel = client.channel('public:venue_zones').onPostgresChanges(
-      event: PostgresChangeEvent.update,
-      schema: 'public',
-      table: 'venue_zones',
-      callback: (payload) => onZoneUpdate(payload.newRecord),
-    )..subscribe();
+    final db = FirebaseFirestore.instance;
 
-    _membersChannel = client.channel('public:group_members').onPostgresChanges(
-      event: PostgresChangeEvent.all,
-      schema: 'public',
-      table: 'group_members',
-      callback: (payload) => onMemberUpdate(payload.newRecord),
-    )..subscribe();
+    // Listen to venue_zones updates
+    _zonesSub = db.collection('venue_zones').snapshots().listen((snapshot) {
+      for (var change in snapshot.docChanges) {
+        if (change.type == DocumentChangeType.added || change.type == DocumentChangeType.modified) {
+          final data = change.doc.data();
+          if (data != null) {
+            onZoneUpdate(data);
+          }
+        }
+      }
+    }, onError: (e) => print('Error in venue_zones stream: $e'));
 
-    _alertsChannel = client.channel('public:smart_alerts').onPostgresChanges(
-      event: PostgresChangeEvent.insert,
-      schema: 'public',
-      table: 'smart_alerts',
-      callback: (payload) => onAlertInsert(payload.newRecord),
-    )..subscribe();
-    
-    _meetPointsChannel = client.channel('public:meet_points').onPostgresChanges(
-      event: PostgresChangeEvent.all,
-      schema: 'public',
-      table: 'meet_points',
-      callback: (payload) => onMeetPointUpdate(payload.newRecord),
-    )..subscribe();
+    // Listen to group_members updates
+    _membersSub = db.collection('group_members').snapshots().listen((snapshot) {
+      for (var change in snapshot.docChanges) {
+        final data = change.doc.data();
+        if (data != null) {
+          onMemberUpdate(data);
+        }
+      }
+    }, onError: (e) => print('Error in group_members stream: $e'));
+
+    // Listen to smart_alerts (only new alerts added)
+    _alertsSub = db.collection('smart_alerts').snapshots().listen((snapshot) {
+      for (var change in snapshot.docChanges) {
+        if (change.type == DocumentChangeType.added) {
+          final data = change.doc.data();
+          if (data != null) {
+            onAlertInsert(data);
+          }
+        }
+      }
+    }, onError: (e) => print('Error in smart_alerts stream: $e'));
+
+    // Listen to meet_points updates
+    _meetPointsSub = db.collection('meet_points').snapshots().listen((snapshot) {
+      for (var change in snapshot.docChanges) {
+        final data = change.doc.data();
+        if (data != null) {
+          onMeetPointUpdate(data);
+        }
+      }
+    }, onError: (e) => print('Error in meet_points stream: $e'));
   }
 
+  /// Stops all listeners.
   void stopSubscriptions() {
-    _zonesChannel?.unsubscribe();
-    _membersChannel?.unsubscribe();
-    _alertsChannel?.unsubscribe();
-    _meetPointsChannel?.unsubscribe();
+    _zonesSub?.cancel();
+    _membersSub?.cancel();
+    _alertsSub?.cancel();
+    _meetPointsSub?.cancel();
   }
 }

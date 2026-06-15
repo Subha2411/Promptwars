@@ -2,8 +2,7 @@
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-blue?logo=flutter)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.x-blue?logo=dart)](https://dart.dev)
-[![Supabase](https://img.shields.io/badge/Supabase-Realtime-green?logo=supabase)](https://supabase.com)
-[![Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?logo=vercel)](https://vercel.com)
+[![Firebase](https://img.shields.io/badge/Firebase-Hosting%20%26%20Database-orange?logo=firebase)](https://firebase.google.com)
 
 > Built for **Google Hack2Skills** — Improving physical event experiences at large-scale venues.
 
@@ -112,11 +111,11 @@ The `AlertEngine` scans venue zone states every 5 seconds and fires alert rules:
 - *"Food Court A has short queues"* → when density drops below 0.3
 - *"Group member Sarah is far away"* → when member distance > 3 grid cells from user
 
-### 7. ☁️ Supabase Real-Time Sync
-When Supabase credentials are configured, the app switches to **live sync mode**:
-- `venue_zones` table is subscribed to via Postgres Change Data Capture
-- `group_members` table is updated on every position change
-- `smart_alerts` table broadcasts alerts to all users in real-time
+### 7. ☁️ Firebase Cloud Firestore Sync
+When Firebase credentials are configured, the app switches to **live sync mode**:
+- `venue_zones` collection is subscribed to via Firestore Document Snapshot streams
+- `group_members` collection is updated on every position change
+- `smart_alerts` collection broadcasts alerts to all users in real-time
 - Graceful offline fallback: if the connection drops, the app silently reverts to local simulation
 
 ---
@@ -141,13 +140,13 @@ When Supabase credentials are configured, the app switches to **live sync mode**
 |-------|-----------|
 | UI Framework | Flutter 3.x (Dart) |
 | State Management | Provider |
-| Backend / Realtime | Supabase (PostgreSQL + Realtime) |
+| Backend / Realtime | Firebase (Cloud Firestore) |
 | Offline Simulation | Custom Dart `CrowdSimulator` |
 | Pathfinding | Dijkstra's Algorithm (custom Dart implementation) |
 | Map Rendering | Flutter `CustomPainter` |
 | Animations | `flutter_animate` |
 | UI Design | Glassmorphism with `BackdropFilter` + `google_fonts` |
-| Deployment | Vercel |
+| Deployment | Firebase Hosting |
 | Icons | `iconsax_flutter` |
 
 ---
@@ -169,54 +168,72 @@ flutter run -d chrome
 flutter run
 ```
 
-> The app runs fully in **offline mode** by default. No Supabase credentials required.
+> The app runs fully in **offline mode** by default. No Firebase credentials required.
 
-### Enabling Supabase (Optional)
-Edit `lib/config/supabase_config.dart`:
+### Enabling Firebase (Optional)
+Edit `lib/config/firebase_config.dart` with your project's Firebase Web app config:
 ```dart
-static const String supabaseUrl = 'YOUR_SUPABASE_URL';
-static const String supabaseAnonKey = 'YOUR_ANON_KEY';
+static const String apiKey = 'YOUR_API_KEY';
+static const String projectId = 'YOUR_PROJECT_ID';
+// ...
 ```
 
-### 🌐 Deploying to Vercel
+### 🌐 Deploying to Firebase Hosting
 
-You can deploy this Flutter Web app directly to Vercel by importing the repository and applying the following configuration:
+You can deploy this Flutter Web app directly to Firebase Hosting:
 
-*   **Framework Preset:** `Other`
-*   **Root Directory:** `arena_iq`
-*   **Build & Development Settings:**
-    *   **Build Command:** `flutter/bin/flutter build web --release`
-    *   **Install Command:** `if cd flutter; then git pull && cd .. ; else git clone https://github.com/flutter/flutter.git; fi && ls && flutter/bin/flutter doctor && flutter/bin/flutter clean && flutter/bin/flutter config --enable-web`
-    *   **Output Directory:** `build/web`
+1. **Log in to Firebase CLI:**
+   ```bash
+   firebase login
+   ```
+2. **Build the Flutter Web app locally:**
+   ```bash
+   flutter build web --release
+   ```
+3. **Deploy to Firebase Hosting:**
+   ```bash
+   firebase deploy --only hosting
+   ```
 
 ---
 
-## 📊 Supabase Schema
+## 📊 Cloud Firestore Schema
 
-```sql
--- Venue Zones
-create table venue_zones (
-  id text primary key,
-  col int, row int,
-  type text, density float,
-  updated_at timestamptz default now()
-);
+Firestore uses a flexible document/collection structure. The following collections are used by the app:
 
--- Group Members
-create table group_members (
-  id uuid primary key default gen_random_uuid(),
-  name text, avatar_color int,
-  grid_col int, grid_row int,
-  meet_point_col int, meet_point_row int
-);
+### 1. `venue_zones`
+Documents are keyed by zone ID (e.g. `0_0`, `gate_3`):
+*   `id`: String
+*   `density`: Float (0.0 to 1.0)
+*   `updated_at`: Timestamp
 
--- Smart Alerts
-create table smart_alerts (
-  id uuid primary key default gen_random_uuid(),
-  type text, title text, message text,
-  zone_id text, created_at timestamptz default now()
-);
-```
+### 2. `group_members`
+Documents are keyed by member ID:
+*   `id`: String (UUID)
+*   `name`: String
+*   `avatar_color`: String (hex code)
+*   `grid_col`: Int
+*   `grid_row`: Int
+*   `meet_point_col`: Int
+*   `meet_point_row`: Int
+*   `group_code`: String
+
+### 3. `meet_points`
+Documents are keyed by group code (e.g. `HACK26`):
+*   `group_code`: String
+*   `grid_x`: Int
+*   `grid_y`: Int
+*   `set_by`: String
+*   `updated_at`: Timestamp
+
+### 4. `smart_alerts`
+Documents are keyed by alert ID:
+*   `id`: String (UUID)
+*   `type`: String
+*   `title`: String
+*   `message`: String
+*   `zone_id`: String
+*   `created_at`: String (ISO-8601)
 
 ---
 

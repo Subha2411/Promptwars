@@ -2,13 +2,13 @@ import 'package:flutter/foundation.dart';
 import '../models/venue_zone.dart';
 import '../utils/constants.dart';
 import '../services/crowd_simulator.dart';
-import '../services/supabase_service.dart';
+import '../services/firebase_service.dart';
 import '../services/realtime_sync_service.dart';
 
 class VenueProvider extends ChangeNotifier {
   List<VenueZone> _zones = [];
   CrowdSimulator? _simulator;
-  final SupabaseService _supabase = SupabaseService();
+  final FirebaseService _firebase = FirebaseService();
   RealtimeSyncService? _syncService;
   
   bool _isOnline = false;
@@ -22,7 +22,7 @@ class VenueProvider extends ChangeNotifier {
   }
 
   void _checkConnectivityAndInit() {
-    _isOnline = _supabase.isOnline;
+    _isOnline = _firebase.isOnline;
     
     if (_isOnline) {
       _initOnlineSync();
@@ -49,14 +49,14 @@ class VenueProvider extends ChangeNotifier {
     _simulator = CrowdSimulator(onUpdate: (updatedZones) {
        _zones = updatedZones;
        notifyListeners();
-       // Push changes to supabase
+       // Push changes to firebase
        for (var z in updatedZones) {
-          _supabase.updateZoneDensity(z.id, z.density);
+          _firebase.updateZoneDensity(z.id, z.density);
        }
     });
     _simulator!.start(_zones);
 
-    _syncService = RealtimeSyncService(_supabase);
+    _syncService = RealtimeSyncService(_firebase);
     _syncService!.startSubscriptions(
        onZoneUpdate: _handleRemoteZoneUpdate,
        onMemberUpdate: (_) {}, // Handled by GroupProv

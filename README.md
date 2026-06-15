@@ -4,8 +4,7 @@
 > *Improving the physical event experience at large-scale sporting venues*
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-blue?logo=flutter)](https://flutter.dev)
-[![Supabase](https://img.shields.io/badge/Supabase-Realtime-green?logo=supabase)](https://supabase.com)
-[![Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?logo=vercel)](https://vercel.com)
+[![Firebase](https://img.shields.io/badge/Firebase-Hosting%20%26%20Database-orange?logo=firebase)](https://firebase.google.com)
 [![License](https://img.shields.io/badge/license-MIT-purple)](LICENSE)
 
 ---
@@ -119,13 +118,13 @@ Rule-based engine checks conditions every 5 seconds:
 |-------|------|
 | Mobile / Web Framework | Flutter 3.x (Dart) |
 | State Management | Provider |
-| Realtime Backend | Supabase (Postgres + Realtime) |
+| Realtime Backend | Firebase (Cloud Firestore) |
 | Pathfinding | Custom Dijkstra (Dart) |
 | Map Rendering | Flutter `CustomPainter` |
 | Animations | `flutter_animate` |
 | UI Design System | Glassmorphism (`BackdropFilter`) |
 | Fonts | Google Fonts (Inter) |
-| Deployment | Vercel |
+| Deployment | Firebase Hosting |
 
 ---
 
@@ -143,22 +142,28 @@ flutter pub get
 flutter run -d chrome
 ```
 
-> **No API keys or Supabase setup required to run!**  
+> **No API keys or Firebase setup required to run!**  
 > The app boots in offline simulation mode automatically.
 
 ### Enable Live Sync (Optional)
-Edit `lib/config/supabase_config.dart` with your Supabase project credentials.
+Edit `lib/config/firebase_config.dart` with your Firebase project credentials.
 
-### 🌐 Deploying to Vercel
+### 🌐 Deploying to Firebase Hosting
 
-You can deploy this Flutter Web app directly to Vercel by importing your repository and applying the following configuration:
+You can deploy this Flutter Web app directly to Firebase Hosting by running the following commands from the `arena_iq` directory:
 
-*   **Framework Preset:** `Other`
-*   **Root Directory:** `arena_iq`
-*   **Build & Development Settings:**
-    *   **Build Command:** `flutter/bin/flutter build web --release`
-    *   **Install Command:** `if cd flutter; then git pull && cd .. ; else git clone https://github.com/flutter/flutter.git; fi && ls && flutter/bin/flutter doctor && flutter/bin/flutter clean && flutter/bin/flutter config --enable-web`
-    *   **Output Directory:** `build/web`
+1. **Log in to Firebase CLI:**
+   ```bash
+   firebase login
+   ```
+2. **Build the Flutter Web app locally:**
+   ```bash
+   flutter build web --release
+   ```
+3. **Deploy the application:**
+   ```bash
+   firebase deploy --only hosting
+   ```
 
 ---
 
@@ -167,14 +172,15 @@ You can deploy this Flutter Web app directly to Vercel by importing your reposit
 ```
 arena_iq/
 ├── lib/
-│   ├── config/          # Supabase credentials
+│   ├── config/          # Firebase credentials
 │   ├── models/          # VenueZone, GroupMember, SmartAlert, etc.
 │   ├── providers/       # 5 core state providers
 │   ├── screens/         # Home, Dashboard, Navigation, Queue, Group
-│   ├── services/        # CrowdSimulator, Pathfinder, AlertEngine, Supabase
+│   ├── services/        # CrowdSimulator, Pathfinder, AlertEngine, Firebase
 │   ├── utils/           # Constants, Extensions
 │   └── widgets/         # GlassCard, Heatmap, RouteOverlay, AlertCard, etc.
-└── vercel.json          # Vercel routing configuration
+├── firebase.json        # Firebase Hosting config
+└── .firebaserc          # Firebase project mapping
 ```
 
 ---

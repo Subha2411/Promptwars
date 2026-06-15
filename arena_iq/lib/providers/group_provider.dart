@@ -5,10 +5,10 @@ import 'package:flutter/material.dart';
 import '../models/group_member.dart';
 import '../models/route_step.dart';
 import '../utils/constants.dart';
-import '../services/supabase_service.dart';
+import '../services/firebase_service.dart';
 
 class GroupProvider extends ChangeNotifier {
-  final SupabaseService _supabase = SupabaseService();
+  final FirebaseService _firebase = FirebaseService();
   
   String _groupCode = 'HACK26';
   List<GroupMember> _members = [];
@@ -49,8 +49,8 @@ class GroupProvider extends ChangeNotifier {
                  m.gridY = newY;
                  changed = true;
                  
-                  // Update supabase if online
-                 _supabase.upsertGroupMember(m, _groupCode);
+                  // Update firebase if online
+                  _firebase.upsertGroupMember(m, _groupCode);
              }
           }
        }
@@ -61,7 +61,7 @@ class GroupProvider extends ChangeNotifier {
   void setMeetPoint(int x, int y) {
      _meetPoint = RouteStep(gridX: x, gridY: y);
      notifyListeners();
-     _supabase.setMeetPoint(_groupCode, x, y, 'You');
+     _firebase.setMeetPoint(_groupCode, x, y, 'You');
   }
 
   /// Called by RealtimeSyncService when Supabase pushes a member change
