@@ -5,7 +5,7 @@
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-blue?logo=flutter)](https://flutter.dev)
 [![Supabase](https://img.shields.io/badge/Supabase-Realtime-green?logo=supabase)](https://supabase.com)
-[![Cloud Run](https://img.shields.io/badge/Deployed%20on-Cloud%20Run-orange?logo=googlecloud)](https://cloud.google.com/run)
+[![Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?logo=vercel)](https://vercel.com)
 [![License](https://img.shields.io/badge/license-MIT-purple)](LICENSE)
 
 ---
@@ -125,7 +125,7 @@ Rule-based engine checks conditions every 5 seconds:
 | Animations | `flutter_animate` |
 | UI Design System | Glassmorphism (`BackdropFilter`) |
 | Fonts | Google Fonts (Inter) |
-| Deployment | Google Cloud Run + Cloud Build |
+| Deployment | Vercel |
 
 ---
 
@@ -149,6 +149,17 @@ flutter run -d chrome
 ### Enable Live Sync (Optional)
 Edit `lib/config/supabase_config.dart` with your Supabase project credentials.
 
+### 🌐 Deploying to Vercel
+
+You can deploy this Flutter Web app directly to Vercel by importing your repository and applying the following configuration:
+
+*   **Framework Preset:** `Other`
+*   **Root Directory:** `arena_iq`
+*   **Build & Development Settings:**
+    *   **Build Command:** `flutter/bin/flutter build web --release`
+    *   **Install Command:** `if cd flutter; then git pull && cd .. ; else git clone https://github.com/flutter/flutter.git; fi && ls && flutter/bin/flutter doctor && flutter/bin/flutter clean && flutter/bin/flutter config --enable-web`
+    *   **Output Directory:** `build/web`
+
 ---
 
 ## 📁 Project Structure
@@ -163,9 +174,7 @@ arena_iq/
 │   ├── services/        # CrowdSimulator, Pathfinder, AlertEngine, Supabase
 │   ├── utils/           # Constants, Extensions
 │   └── widgets/         # GlassCard, Heatmap, RouteOverlay, AlertCard, etc.
-├── Dockerfile           # Multi-stage Flutter build → nginx serve
-├── nginx.conf           # Flutter web routing config
-└── cloudbuild.yaml      # Google Cloud Build pipeline
+└── vercel.json          # Vercel routing configuration
 ```
 
 ---

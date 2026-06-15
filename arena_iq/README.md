@@ -3,7 +3,7 @@
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-blue?logo=flutter)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.x-blue?logo=dart)](https://dart.dev)
 [![Supabase](https://img.shields.io/badge/Supabase-Realtime-green?logo=supabase)](https://supabase.com)
-[![Cloud Run](https://img.shields.io/badge/Google%20Cloud-Cloud%20Run-orange?logo=googlecloud)](https://cloud.google.com/run)
+[![Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?logo=vercel)](https://vercel.com)
 
 > Built for **Google Hack2Skills** — Improving physical event experiences at large-scale venues.
 
@@ -147,7 +147,7 @@ When Supabase credentials are configured, the app switches to **live sync mode**
 | Map Rendering | Flutter `CustomPainter` |
 | Animations | `flutter_animate` |
 | UI Design | Glassmorphism with `BackdropFilter` + `google_fonts` |
-| Deployment | Google Cloud Run + Cloud Build |
+| Deployment | Vercel |
 | Icons | `iconsax_flutter` |
 
 ---
@@ -177,6 +177,17 @@ Edit `lib/config/supabase_config.dart`:
 static const String supabaseUrl = 'YOUR_SUPABASE_URL';
 static const String supabaseAnonKey = 'YOUR_ANON_KEY';
 ```
+
+### 🌐 Deploying to Vercel
+
+You can deploy this Flutter Web app directly to Vercel by importing the repository and applying the following configuration:
+
+*   **Framework Preset:** `Other`
+*   **Root Directory:** `arena_iq`
+*   **Build & Development Settings:**
+    *   **Build Command:** `flutter/bin/flutter build web --release`
+    *   **Install Command:** `if cd flutter; then git pull && cd .. ; else git clone https://github.com/flutter/flutter.git; fi && ls && flutter/bin/flutter doctor && flutter/bin/flutter clean && flutter/bin/flutter config --enable-web`
+    *   **Output Directory:** `build/web`
 
 ---
 
