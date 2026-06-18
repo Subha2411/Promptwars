@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../providers/group_provider.dart';
 import '../providers/venue_provider.dart';
+import '../models/venue_config.dart';
 import '../providers/navigation_provider.dart';
 import '../app_theme.dart';
 import '../widgets/glass_app_bar.dart';
@@ -17,10 +18,11 @@ class GroupScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final VenueConfig? venue = context.watch<VenueProvider>().selectedVenue;
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: const GlassAppBar(
-        title: 'Group Radar',
+      appBar: GlassAppBar(
+        title: venue != null ? 'Group Radar - ${venue.name}' : 'Group Radar',
       ),
       body: Stack(
         children: [

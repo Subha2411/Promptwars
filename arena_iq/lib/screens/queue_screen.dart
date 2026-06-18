@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../providers/queue_provider.dart';
+import '../providers/venue_provider.dart';
+import '../models/venue_config.dart';
 import '../models/venue_zone.dart';
 import '../app_theme.dart';
 import '../widgets/glass_app_bar.dart';
@@ -13,10 +15,11 @@ class QueueScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final VenueConfig? venue = context.watch<VenueProvider>().selectedVenue;
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: const GlassAppBar(
-        title: 'Queue Insights',
+      appBar: GlassAppBar(
+        title: venue != null ? 'Queue Insights - ${venue.name}' : 'Queue Insights',
       ),
       body: Stack(
         children: [

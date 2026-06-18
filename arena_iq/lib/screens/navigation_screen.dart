@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../providers/venue_provider.dart';
 import '../providers/navigation_provider.dart';
 import '../models/venue_zone.dart';
+import '../models/venue_config.dart';
 import '../app_theme.dart';
 import '../widgets/glass_app_bar.dart';
 import '../widgets/glass_nav_bar.dart';
@@ -32,10 +33,11 @@ class _NavigationScreenState extends State<NavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final VenueConfig? venue = context.watch<VenueProvider>().selectedVenue;
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: const GlassAppBar(
-        title: 'Smart Navigation',
+      appBar: GlassAppBar(
+        title: venue != null ? 'Navigation - ${venue.name}' : 'Smart Navigation',
       ),
       body: Stack(
         children: [

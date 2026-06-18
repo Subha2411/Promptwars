@@ -1,8 +1,11 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../app_theme.dart';
 import '../app_routes.dart';
+import '../models/venue_config.dart';
+import '../providers/venue_provider.dart';
 import '../widgets/glass_button.dart';
 import '../widgets/glass_card.dart';
 
@@ -17,26 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedVenue = 0;
   bool _isEntering = false;
 
-  final List<Map<String, String>> _venues = [
-    {
-      'title': 'Narendra Modi Stadium',
-      'subtitle': 'IPL 2026 Final',
-      'icon': '🏏',
-      'capacity': '132,000',
-    },
-    {
-      'title': 'The O2 Arena',
-      'subtitle': 'Coldplay Global Tour',
-      'icon': '🎵',
-      'capacity': '20,000',
-    },
-    {
-      'title': 'Madison Square Garden',
-      'subtitle': 'Knicks vs Lakers',
-      'icon': '🏀',
-      'capacity': '19,500',
-    }
-  ];
+  final List<VenueConfig> _venues = VenueRegistry.allVenues;
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
                       child: Text(
-                        'ArenaIQ',
+                        'VenueIQ',
                         style: Theme.of(context).textTheme.displayLarge?.copyWith(
                               color: AppTheme.accentCyan,
                               letterSpacing: -1,
@@ -81,7 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
                       child: Text(
-                        'Select a live event',
+                        'Select a live venue',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               color: AppTheme.textSecondary,
                               fontWeight: FontWeight.w400,
@@ -122,7 +106,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     style: const TextStyle(color: Colors.white),
                                     decoration: InputDecoration(
                                       border: InputBorder.none,
-                                      hintText: 'Enter Gate / Block (e.g. B-12)',
+                                      hintText: _venues[_selectedVenue].hintText,
                                       hintStyle: TextStyle(color: AppTheme.textSecondary.withOpacity(0.5)),
                                     ),
                                   ),
@@ -142,15 +126,23 @@ class _HomeScreenState extends State<HomeScreen> {
                                  setState(() => _isEntering = true);
                                  FocusScope.of(context).unfocus();
                                  
+                                 // Store selected venue in state provider
+                                 final selectedVenue = _venues[_selectedVenue];
+                                 context.read<VenueProvider>().setSelectedVenue(selectedVenue);
+                                 
                                  Future.delayed(const Duration(milliseconds: 1400), () {
-                                    Navigator.pushReplacementNamed(context, AppRoutes.navigation);
+                                    Navigator.pushReplacementNamed(
+                                      context, 
+                                      AppRoutes.navigation,
+                                      arguments: selectedVenue,
+                                    );
                                  });
                               },
                               child: _isEntering 
                                 ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                : const Text(
-                                  'Enter Arena',
-                                  style: TextStyle(
+                                : Text(
+                                  _venues[_selectedVenue].buttonText,
+                                  style: const TextStyle(
                                      color: Colors.white,
                                      fontSize: 18,
                                      fontWeight: FontWeight.bold,
@@ -184,7 +176,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildVenueCard(Map<String, String> venue, bool isSelected) {
+  Widget _buildVenueCard(VenueConfig venue, bool isSelected) {
+     final Color typeColor = _getTagColor(venue.type);
      return AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         margin: EdgeInsets.only(
@@ -195,43 +188,72 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         child: GlassCard(
            // Highlight current selection
-           color: isSelected ? AppTheme.accentCyan.withOpacity(0.1) : AppTheme.glassWhite.withOpacity(0.05),
+           color: isSelected ? typeColor.withOpacity(0.1) : AppTheme.glassWhite.withOpacity(0.05),
            padding: const EdgeInsets.all(24),
            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                  Row(
                    children: [
-                     Text(venue['icon']!, style: const TextStyle(fontSize: 36)),
+                     Icon(venue.icon, size: 36, color: Colors.white),
                      const Spacer(),
-                     if (isSelected) 
-                        Container(
-                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                           decoration: BoxDecoration(
-                              color: AppTheme.accentCyan.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: AppTheme.accentCyan),
-                           ),
-                           child: const Text('LIVE SIGNAL', style: TextStyle(color: AppTheme.accentCyan, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.0)),
-                        )
+                     Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                           color: typeColor.withOpacity(0.2),
+                           borderRadius: BorderRadius.circular(20),
+                           border: Border.all(color: typeColor),
+                        ),
+                        child: Text(
+                          _getTagText(venue.type),
+                          style: TextStyle(
+                            color: typeColor,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                     ),
                    ],
                  ),
                  const Spacer(),
-                 Text(venue['title']!, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                 Text(venue.name, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
                  const SizedBox(height: 4),
-                 Text(venue['subtitle']!, style: const TextStyle(color: AppTheme.accentPurple, fontSize: 14)),
+                 Text(venue.subtitle, style: const TextStyle(color: AppTheme.accentPurple, fontSize: 14)),
                  const SizedBox(height: 16),
                  Row(
                     children: [
                        const Icon(Icons.people, color: AppTheme.textSecondary, size: 14),
                        const SizedBox(width: 4),
-                       Text('Capacity: ${venue['capacity']}', style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                       Text('Capacity: ${venue.capacity}', style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
                     ]
                  )
               ]
            )
         )
      );
+  }
+
+  Color _getTagColor(VenueType type) {
+     switch (type) {
+       case VenueType.stadium:
+         return AppTheme.accentCyan;
+       case VenueType.mall:
+         return AppTheme.accentYellow;
+       case VenueType.railwayStation:
+         return AppTheme.accentPurple;
+     }
+  }
+
+  String _getTagText(VenueType type) {
+     switch (type) {
+       case VenueType.stadium:
+         return 'STADIUM';
+       case VenueType.mall:
+         return 'MALL';
+       case VenueType.railwayStation:
+         return 'RAILWAY STATION';
+     }
   }
 }
 

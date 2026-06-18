@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../models/venue_zone.dart';
+import '../models/venue_config.dart';
 import '../utils/constants.dart';
 import '../services/crowd_simulator.dart';
 import '../services/firebase_service.dart';
@@ -10,6 +11,14 @@ class VenueProvider extends ChangeNotifier {
   CrowdSimulator? _simulator;
   final FirebaseService _firebase = FirebaseService();
   RealtimeSyncService? _syncService;
+  
+  VenueConfig? _selectedVenue;
+  VenueConfig? get selectedVenue => _selectedVenue;
+
+  void setSelectedVenue(VenueConfig venue) {
+    _selectedVenue = venue;
+    notifyListeners();
+  }
   
   bool _isOnline = false;
 

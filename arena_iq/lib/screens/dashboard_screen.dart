@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../providers/venue_provider.dart';
+import '../models/venue_config.dart';
 import '../providers/alert_provider.dart';
 import '../app_theme.dart';
 import '../widgets/glass_app_bar.dart';
@@ -17,11 +18,12 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final venue = context.watch<VenueProvider>().selectedVenue;
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: const GlassAppBar(
-        title: 'Live Dashboard',
-        actions: [ConnectionStatusBadge()],
+      appBar: GlassAppBar(
+        title: venue != null ? '${venue.name} Dashboard' : 'Live Dashboard',
+        actions: const [ConnectionStatusBadge()],
       ),
       body: Stack(
         children: [
