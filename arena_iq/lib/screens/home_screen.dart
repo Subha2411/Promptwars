@@ -2,6 +2,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
 import '../app_theme.dart';
 import '../app_routes.dart';
 import '../models/venue_config.dart';
@@ -95,25 +97,103 @@ class _HomeScreenState extends State<HomeScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 24),
                       child: Column(
                         children: [
-                          GlassCard(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.sensor_door, color: AppTheme.accentPurple, size: 20),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: TextField(
-                                    style: const TextStyle(color: Colors.white),
-                                    decoration: InputDecoration(
-                                      border: InputBorder.none,
-                                      hintText: _venues[_selectedVenue].hintText,
-                                      hintStyle: TextStyle(color: AppTheme.textSecondary.withOpacity(0.5)),
+                          TypeAheadField<Map<String, dynamic>>(
+                            suggestionsCallback: (search) async {
+                              if (search.isEmpty) return const [];
+                              try {
+                                final querySnapshot = await FirebaseFirestore.instance
+                                    .collection('venues')
+                                    .where('search_key', isGreaterThanOrEqualTo: search.toLowerCase())
+                                    .where('search_key', isLessThanOrEqualTo: search.toLowerCase() + '\uf8ff')
+                                    .limit(6)
+                                    .get();
+                                return querySnapshot.docs.map((doc) => doc.data()).toList();
+                              } catch (e) {
+                                print('Firebase query error: $e');
+                                // Graceful fallback to local registry
+                                return VenueRegistry.allVenues
+                                    .where((v) => v.name.toLowerCase().contains(search.toLowerCase()))
+                                    .take(6)
+                                    .map((v) => {
+                                          'id': v.id,
+                                          'name': v.name,
+                                          'subtitle': v.subtitle,
+                                          'type': v.type.name,
+                                          'capacity': v.capacity,
+                                          'hintText': v.hintText,
+                                          'buttonText': v.buttonText,
+                                          'lat': 13.0827,
+                                          'lon': 80.2707,
+                                        })
+                                    .toList();
+                              }
+                            },
+                            builder: (context, controller, focusNode) {
+                              return GlassCard(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.search, color: AppTheme.accentPurple, size: 20),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: TextField(
+                                        controller: controller,
+                                        focusNode: focusNode,
+                                        style: const TextStyle(color: Colors.white),
+                                        decoration: InputDecoration(
+                                          border: InputBorder.none,
+                                          hintText: 'Search venues (e.g. Phoenix)...',
+                                          hintStyle: TextStyle(color: AppTheme.textSecondary.withOpacity(0.5)),
+                                        ),
+                                      ),
                                     ),
-                                  ),
+                                    const Icon(Icons.qr_code_scanner, color: AppTheme.textSecondary, size: 20),
+                                  ],
                                 ),
-                                const Icon(Icons.qr_code_scanner, color: AppTheme.textSecondary, size: 20),
-                              ],
-                            ),
+                              );
+                            },
+                            itemBuilder: (context, suggestion) {
+                              final name = suggestion['name'] as String? ?? '';
+                              final type = suggestion['type'] as String? ?? '';
+                              return ListTile(
+                                leading: Icon(_getSuggestionIcon(type), color: AppTheme.accentCyan),
+                                title: Text(name, style: const TextStyle(color: Colors.white)),
+                                subtitle: Text(type.toUpperCase(), style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                                tileColor: AppTheme.bgDark.withOpacity(0.95),
+                              );
+                            },
+                            onSelected: (suggestion) {
+                              final name = suggestion['name'] as String? ?? '';
+                              final type = suggestion['type'] as String? ?? '';
+                              final lat = suggestion['lat'];
+                              final lon = suggestion['lon'];
+                              print('Selected coordinates: lat=$lat, lon=$lon');
+                              
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Selected: $name (lat: $lat, lon: $lon)'),
+                                  backgroundColor: AppTheme.bgGradientStart,
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+
+                              // Set this as the selected venue in state provider
+                              final selectedVenueConfig = VenueConfig(
+                                id: suggestion['id'] ?? '',
+                                name: name,
+                                subtitle: suggestion['subtitle'] ?? '',
+                                type: type == 'mall'
+                                    ? VenueType.mall
+                                    : type == 'railwayStation'
+                                        ? VenueType.railwayStation
+                                        : VenueType.stadium,
+                                icon: _getSuggestionIcon(type),
+                                capacity: suggestion['capacity'] ?? '20,000',
+                                hintText: suggestion['hintText'] ?? 'Enter details...',
+                                buttonText: suggestion['buttonText'] ?? 'Enter',
+                              );
+                              context.read<VenueProvider>().setSelectedVenue(selectedVenueConfig);
+                            },
                           ).animate().slideY(begin: 0.2).fadeIn(delay: 600.ms),
                           
                           const SizedBox(height: 24),
@@ -253,6 +333,20 @@ class _HomeScreenState extends State<HomeScreen> {
          return 'MALL';
        case VenueType.railwayStation:
          return 'RAILWAY STATION';
+     }
+  }
+
+  IconData _getSuggestionIcon(String type) {
+     switch (type.toLowerCase()) {
+       case 'mall':
+         return Icons.shopping_bag;
+       case 'station':
+       case 'railwaystation':
+         return Icons.train;
+       case 'stadium':
+         return Icons.stadium;
+       default:
+         return Icons.place;
      }
   }
 }

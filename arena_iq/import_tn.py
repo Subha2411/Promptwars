@@ -130,6 +130,7 @@ def main():
         doc_data = {
             "id": slug,
             "name": name,
+            "search_key": name.lower(),
             "subtitle": tags.get("addr:city", "Tamil Nadu") + ", India",
             "type": venue_type,
             "capacity": capacity_map[venue_type],
